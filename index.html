@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<title>Logic Gate Builder</title>
+<style>
+/* Темы через CSS переменные */
+:root{
+  --bg0:#08080f;--bg1:#0d0d1a;--bg2:#070712;
+  --brd:#1a1a3a;--brd2:#252540;
+  --acc:#ff3333;--acc2:#ff333355;
+  --txt:#445566;--txt2:#3a3a6a;
+  --sbg:#0f0f22;--ssel:#1a0808;--sbd:#ff3333;
+  --hbg:#0a1520;--hbrd:#1a3a5a;--hsel:#00aaff;
+  --dbg:#150505;--dbrd:#3a1515;
+  --dot:#13132b;--gln:#0f0f26;--cln:#1a1a3a;
+}
+body.dark{
+  --bg0:#111;--bg1:#1a1a1a;--bg2:#0f0f0f;
+  --brd:#333;--brd2:#444;--acc:#fff;--acc2:#ffffff33;
+  --txt:#666;--txt2:#555;--sbg:#222;--ssel:#2a2a2a;--sbd:#fff;
+  --hbg:#1a2030;--hbrd:#334455;--hsel:#aaccff;
+  --dbg:#220000;--dbrd:#440000;--dot:#2a2a2a;--gln:#1e1e1e;--cln:#303030;
+}
+body.cyber{
+  --bg0:#000a08;--bg1:#001510;--bg2:#00100a;
+  --brd:#0a3a2a;--brd2:#1a4a35;--acc:#00ff88;--acc2:#00ff8833;
+  --txt:#224433;--txt2:#1a3328;--sbg:#001a12;--ssel:#002a18;--sbd:#00ff88;
+  --hbg:#001a10;--hbrd:#0a4a2a;--hsel:#00ffaa;
+  --dbg:#150500;--dbrd:#3a1500;--dot:#0a2018;--gln:#061510;--cln:#0a2a1a;
+}
+body.neon{
+  --bg0:#080010;--bg1:#100020;--bg2:#060010;
+  --brd:#2a0a4a;--brd2:#3a1560;--acc:#ff00ff;--acc2:#ff00ff33;
+  --txt:#443355;--txt2:#332244;--sbg:#120022;--ssel:#1a0030;--sbd:#ff00ff;
+  --hbg:#100018;--hbrd:#2a0a44;--hsel:#ff44ff;
+  --dbg:#150008;--dbrd:#3a0020;--dot:#1a0830;--gln:#0f0520;--cln:#1a0a2a;
+}
+body.amber{
+  --bg0:#0f0800;--bg1:#1a1000;--bg2:#120a00;
+  --brd:#3a2a00;--brd2:#4a3800;--acc:#ffaa00;--acc2:#ffaa0033;
+  --txt:#554400;--txt2:#443300;--sbg:#1a1200;--ssel:#2a1a00;--sbd:#ffaa00;
+  --hbg:#121000;--hbrd:#3a2a00;--hsel:#ffcc44;
+  --dbg:#150500;--dbrd:#3a1500;--dot:#1e1600;--gln:#120e00;--cln:#2a1e00;
+}
+body.ice{
+  --bg0:#000810;--bg1:#001020;--bg2:#000a18;
+  --brd:#0a2040;--brd2:#153558;--acc:#44aaff;--acc2:#44aaff33;
+  --txt:#224455;--txt2:#1a3344;--sbg:#001525;--ssel:#002035;--sbd:#44aaff;
+  --hbg:#001020;--hbrd:#0a3050;--hsel:#88ccff;
+  --dbg:#100515;--dbrd:#2a1535;--dot:#0a1828;--gln:#061018;--cln:#0a2030;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;font-family:monospace}
+body{background:var(--bg0)}
+#gc{display:flex;flex-direction:column;height:100vh;height:100dvh;background:var(--bg1)}
+#hdr{display:flex;align-items:center;justify-content:space-between;padding:5px 10px;background:var(--bg2);border-bottom:2px solid var(--brd);flex-shrink:0}
+#hdr h1{font-size:13px;font-weight:900;color:var(--acc);letter-spacing:3px}
+#hdrR{font-size:9px;color:var(--txt);letter-spacing:1px;text-align:right;line-height:1.7}
+#hdrBtns{display:flex;gap:6px;align-items:center}
+.hbtn{width:34px;height:34px;border-radius:8px;border:2px solid var(--brd2);background:var(--sbg);color:var(--txt);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.hbtn:active{opacity:.7}
+#gameCanvas{flex-grow:1;display:block;min-height:0;touch-action:none}
+#toolbar{display:flex;align-items:center;background:var(--bg2);border-top:2px solid var(--brd);padding:6px 8px calc(6px + env(safe-area-inset-bottom));gap:6px;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
+#toolbar::-webkit-scrollbar{display:none}
+.slot{width:56px;height:56px;min-width:56px;border-radius:10px;border:2px solid var(--brd2);background:var(--sbg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;transition:border-color .1s,background .1s;flex-shrink:0}
+.slot:active{transform:scale(.88)}
+.slot.hand{border-color:var(--hbrd);background:var(--hbg)}
+.slot.hand.sel{border-color:var(--hsel);box-shadow:0 0 12px var(--acc2)}
+.slot.del{border-color:var(--dbrd);background:var(--dbg)}
+.slot.del.sel{border-color:#ff2222;box-shadow:0 0 12px #ff222244}
+.slot.sel{border-color:var(--sbd);background:var(--ssel);box-shadow:0 0 12px var(--acc2)}
+.slot canvas{pointer-events:none}
+.slbl{font-size:7px;color:var(--txt2);letter-spacing:1px;font-weight:bold}
+.slot.sel .slbl{color:var(--acc)}
+.slot.hand.sel .slbl{color:var(--hsel)}
+.divider{width:1px;height:44px;background:var(--brd);flex-shrink:0}
+/* Модалки */
+.modal{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,8,.92);overflow-y:auto;padding:16px 12px 32px}
+.modal.show{display:block}
+.modal-inner{max-width:460px;margin:0 auto}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.modal-title{font-size:14px;font-weight:900;color:var(--acc);letter-spacing:3px}
+.modal-close{width:36px;height:36px;border-radius:8px;border:1px solid var(--brd2);background:var(--sbg);color:var(--acc);font-size:18px;cursor:pointer}
+.sec-lbl{font-size:10px;color:var(--txt);letter-spacing:2px;margin-bottom:10px}
+.sec{margin-bottom:22px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.tbtn{padding:11px 6px;border-radius:10px;border:2px solid var(--brd2);background:var(--sbg);cursor:pointer;font-family:monospace;font-size:10px;color:var(--txt);text-align:center;line-height:1.5;transition:border-color .1s}
+.tbtn.on{border-color:var(--acc);color:var(--acc);background:var(--ssel)}
+.tbtn:active{opacity:.7}
+/* Toggle */
+.trow{display:flex;align-items:center;justify-content:space-between;background:var(--sbg);border:1px solid var(--brd2);border-radius:10px;padding:12px 16px;margin-bottom:8px}
+.trow-info{}
+.trow-lbl{font-size:11px;color:var(--txt);letter-spacing:1px}
+.toggle{width:46px;height:26px;border-radius:13px;border:2px solid var(--brd2);background:#1a1a2a;cursor:pointer;position:relative;transition:.2s;flex-shrink:0}
+.toggle.on{background:var(--acc2);border-color:var(--acc)}
+.toggle::after{content:'';width:18px;height:18px;border-radius:50%;background:#556;position:absolute;top:2px;left:2px;transition:.2s}
+.toggle.on::after{left:22px;background:var(--acc)}
+/* Help cards */
+.hcard{background:var(--sbg);border:1px solid var(--brd2);border-radius:12px;margin-bottom:10px;overflow:hidden;cursor:pointer}
+.hcard-head{display:flex;align-items:center;gap:12px;padding:12px 14px}
+.hcard-title{font-size:11px;font-weight:900;color:var(--acc);letter-spacing:2px}
+.hcard-sub{font-size:9px;color:var(--txt);margin-top:2px}
+.hcard-body{display:none;padding:10px 14px 14px;font-size:11px;color:var(--txt);line-height:1.7;border-top:1px solid var(--brd)}
+.hcard.open .hcard-body{display:block}
+.hcard.open{border-color:var(--acc)}
+.tag{display:inline-block;background:var(--bg0);border:1px solid var(--brd2);color:var(--txt);font-size:9px;padding:1px 6px;border-radius:4px;margin:2px}
+/* Confirm */
+#confirm{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.88);align-items:center;justify-content:center}
+#confirm.show{display:flex}
+.confirm-box{background:var(--sbg);border:2px solid #441111;border-radius:16px;padding:28px 24px;max-width:300px;width:90%;text-align:center}
+</style>
+</head>
+<body>
+<div id="gc">
+  <div id="hdr">
+    <h1>⚡ LOGIC GATE BUILDER</h1>
+    <div id="hdrBtns">
+      <button class="hbtn" id="btnHome" title="Вернуться к 0,0">⌖</button>
+      <button class="hbtn" id="btnShare" title="Поделиться">📤</button>
+      <button class="hbtn" id="btnClear" title="Очистить">🗑</button>
+      <button class="hbtn" id="btnSettings" title="Настройки">⚙</button>
+      <button class="hbtn" id="btnHelp" title="Справка">?</button>
+    </div>
+    <div id="hdrR">ZOOM: <span id="zV">100</span>%<br><span id="posV">0, 0</span></div>
+  </div>
+  <canvas id="gameCanvas"></canvas>
+  <div id="toolbar">
+    <div class="slot hand" data-t="hand"><canvas width="36" height="36"></canvas><div class="slbl">РУКА</div></div>
+    <div class="divider"></div>
+    <div class="slot" data-t="gen"><canvas width="36" height="36"></canvas><div class="slbl">ГЕНЕР</div></div>
+    <div class="slot" data-t="wire"><canvas width="36" height="36"></canvas><div class="slbl">СТРЕЛКА</div></div>
+    <div class="slot" data-t="dust"><canvas width="36" height="36"></canvas><div class="slbl">ПРОВОД</div></div>
+    <div class="slot" data-t="bulb"><canvas width="36" height="36"></canvas><div class="slbl">ЛАМПА</div></div>
+    <div class="slot" data-t="not"><canvas width="36" height="36"></canvas><div class="slbl">НЕ</div></div>
+    <div class="slot" data-t="lev"><canvas width="36" height="36"></canvas><div class="slbl">РЫЧАГ</div></div>
+    <div class="slot" data-t="gate"><canvas width="36" height="36"></canvas><div class="slbl">БЛОК</div></div>
+    <div class="divider"></div>
+    <div class="slot del" data-t="del"><canvas width="36" height="36"></canvas><div class="slbl">УДАЛ</div></div>
+  </div>
+</div>
+
+<!-- НАСТРОЙКИ -->
+<div class="modal" id="modSettings">
+  <div class="modal-inner">
+    <div class="modal-head">
+      <span class="modal-title">НАСТРОЙКИ</span>
+      <button class="modal-close" data-close="modSettings">✕</button>
+    </div>
+    <div class="sec"><div class="sec-lbl">ТЕМА</div>
+      <div class="grid2">
+        <button class="tbtn" data-theme="dark">⚫ ТЁМНАЯ</button>
+        <button class="tbtn" data-theme="">🔴 КРАСНАЯ</button>
+        <button class="tbtn" data-theme="cyber">🟢 КИБЕР</button>
+        <button class="tbtn" data-theme="neon">💜 НЕОН</button>
+        <button class="tbtn" data-theme="amber">🟡 ЯНТАРЬ</button>
+        <button class="tbtn" data-theme="ice">🔵 ЛЁД</button>
+      </div>
+    </div>
+
+    <div class="sec"><div class="sec-lbl">ПРОЧЕЕ</div>
+      <div class="trow"><div class="trow-lbl">📍 Координаты</div><div class="toggle on" id="tCoords"></div></div>
+      <div class="trow"><div class="trow-lbl">🔊 Звуки</div><div class="toggle" id="tSound"></div></div>
+    <div class="sec">
+      <div class="sec-lbl">О ПРИЛОЖЕНИИ</div>
+      <button class="tbtn" id="btnPrivacy" style="width:100%;text-align:left;padding:12px 16px">🔒 Политика конфиденциальности</button>
+    </div>
+    </div>
+  </div>
+</div>
+
+<!-- СПРАВКА -->
+<div class="modal" id="modHelp">
+  <div class="modal-inner">
+    <div class="modal-head">
+      <span class="modal-title">ЭЛЕМЕНТЫ</span>
+      <button class="modal-close" data-close="modHelp">✕</button>
+    </div>
+    <div id="helpCards"></div>
+  </div>
+</div>
+
+<!-- ЭКСПОРТ / ИМПОРТ -->
+<div class="modal" id="modShare">
+  <div class="modal-inner">
+    <div class="modal-head">
+      <span class="modal-title">📤 ПОДЕЛИТЬСЯ</span>
+      <button class="modal-close" data-close="modShare">✕</button>
+    </div>
+
+    <!-- ЭКСПОРТ -->
+    <div class="sec">
+      <div class="sec-lbl">КОД КАРТЫ</div>
+      <div style="position:relative">
+        <textarea id="exportCode" readonly
+          style="width:100%;height:90px;background:var(--bg0);border:1px solid var(--brd2);border-radius:10px;color:var(--acc);font-family:monospace;font-size:10px;padding:10px;resize:none;word-break:break-all;line-height:1.5"
+          placeholder="Нажми «Создать код»..."></textarea>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="tbtn" id="btnExport" style="flex:1">⚡ СОЗДАТЬ КОД</button>
+        <button class="tbtn" id="btnCopy" style="flex:1">📋 КОПИРОВАТЬ</button>
+      </div>
+      <div id="exportInfo" style="font-size:9px;color:var(--txt);margin-top:6px;text-align:center"></div>
+    </div>
+
+    <div style="height:1px;background:var(--brd);margin:4px 0 20px"></div>
+
+    <!-- ИМПОРТ -->
+    <div class="sec">
+      <div class="sec-lbl">ЗАГРУЗИТЬ КОД</div>
+      <textarea id="importCode"
+        style="width:100%;height:90px;background:var(--bg0);border:1px solid var(--brd2);border-radius:10px;color:var(--txt);font-family:monospace;font-size:10px;padding:10px;resize:none;word-break:break-all;line-height:1.5"
+        placeholder="Вставь код карты сюда..."></textarea>
+      <button class="tbtn on" id="btnImport" style="width:100%;margin-top:8px;padding:13px">📥 ЗАГРУЗИТЬ КАРТУ</button>
+      <div id="importInfo" style="font-size:9px;margin-top:6px;text-align:center"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PRIVACY POLICY -->
+<div class="modal" id="modPrivacy">
+  <div class="modal-inner">
+    <div class="modal-head">
+      <span class="modal-title">🔒 КОНФИДЕНЦИАЛЬНОСТЬ</span>
+      <button class="modal-close" data-close="modPrivacy">✕</button>
+    </div>
+    <div style="font-size:11px;color:var(--txt);line-height:1.9">
+
+      <div style="font-size:13px;font-weight:bold;color:var(--acc);margin-bottom:12px">Privacy Policy — Logic Gate Builder</div>
+
+      <div style="margin-bottom:14px">
+        <div style="color:var(--acc);font-size:10px;letter-spacing:2px;margin-bottom:6px">СБОР ДАННЫХ</div>
+        Приложение <b>Logic Gate Builder</b> не собирает, не хранит и не передаёт никакие персональные данные пользователей. Мы не запрашиваем имя, email, геолокацию или любую другую личную информацию.
+      </div>
+
+      <div style="margin-bottom:14px">
+        <div style="color:var(--acc);font-size:10px;letter-spacing:2px;margin-bottom:6px">ЛОКАЛЬНОЕ ХРАНИЛИЩЕ</div>
+        Настройки приложения (тема оформления) сохраняются локально на вашем устройстве через localStorage. Эти данные не покидают устройство и недоступны третьим лицам.
+      </div>
+
+      <div style="margin-bottom:14px">
+        <div style="color:var(--acc);font-size:10px;letter-spacing:2px;margin-bottom:6px">ИНТЕРНЕТ</div>
+        Приложение работает полностью офлайн. Никакие данные не отправляются на внешние серверы.
+      </div>
+
+      <div style="margin-bottom:14px">
+        <div style="color:var(--acc);font-size:10px;letter-spacing:2px;margin-bottom:6px">РЕКЛАМА</div>
+        Приложение не содержит рекламы и не использует рекламные SDK.
+      </div>
+
+      <div style="margin-bottom:14px">
+        <div style="color:var(--acc);font-size:10px;letter-spacing:2px;margin-bottom:6px">ДЕТИ</div>
+        Приложение безопасно для всех возрастов. Не содержит контента 18+, насилия или иных ограниченных материалов.
+      </div>
+
+      <div style="margin-bottom:14px">
+        <div style="color:var(--acc);font-size:10px;letter-spacing:2px;margin-bottom:6px">ИЗМЕНЕНИЯ</div>
+        Политика конфиденциальности может обновляться. Актуальная версия всегда доступна в приложении.
+      </div>
+
+      <div style="border-top:1px solid var(--brd);padding-top:12px;font-size:9px;color:var(--txt2)">
+        Последнее обновление: 2026 г.<br>
+        Разработчик: By.L
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ПОДТВЕРЖДЕНИЕ ОЧИСТКИ -->
+<div id="confirm">
+  <div class="confirm-box">
+    <div style="font-size:32px;margin-bottom:12px">🗑</div>
+    <div style="font-size:13px;color:#ff4444;letter-spacing:2px;margin-bottom:8px">ОЧИСТИТЬ КАРТУ?</div>
+    <div style="font-size:11px;color:var(--txt);margin-bottom:24px;line-height:1.6">Все блоки будут удалены.<br>Действие нельзя отменить.</div>
+    <div style="display:flex;gap:10px">
+      <button id="confirmNo" style="flex:1;padding:12px;border-radius:10px;border:2px solid var(--brd2);background:var(--sbg);color:var(--txt);font-size:12px;cursor:pointer;font-family:monospace">ОТМЕНА</button>
+      <button id="confirmYes" style="flex:1;padding:12px;border-radius:10px;border:2px solid #661111;background:#200000;color:#ff4444;font-size:12px;cursor:pointer;font-family:monospace">ОЧИСТИТЬ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(()=>{
+'use strict';
+
+// ═══════════════════════════════════════
+// КОНСТАНТЫ
+// ═══════════════════════════════════════
+const CELL = 48;
+const CS = 16; // chunk size
+const T = {E:0,GEN:1,WIRE:2,BULB:3,NOT:4,LEV:5,DUST:6,GATE:7};
+const D = [[-1,0],[0,1],[1,0],[0,-1]]; // up right down left
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let camX=-400, camY=-200, zoom=1;
+const ZMIN=0.12, ZMAX=4;
+let zoomStep=1.15;
+
+// ═══════════════════════════════════════
+// ЧАНКИ — бесконечная карта
+// ═══════════════════════════════════════
+const chunks = new Map();
+
+function ck(cx,cy){ return cx+'_'+cy; }
+function wk(r,c){ return r+'|'+c; }
+
+function mkCell(type=0,dir=1,on=false){
+  return {type,dir,on,powered:false,blocked:false};
+}
+
+function getChunk(cx,cy){
+  const k=ck(cx,cy);
+  if(chunks.has(k)) return chunks.get(k);
+  let ch;
+  ch={cells:Array.from({length:CS},()=>Array.from({length:CS},()=>mkCell()))};
+  chunks.set(k,ch);
+  return ch;
+}
+
+function wtc(wr,wc){ // world→chunk
+  const cx=Math.floor(wc/CS), cy=Math.floor(wr/CS);
+  const lc=((wc%CS)+CS)%CS, lr=((wr%CS)+CS)%CS;
+  return [cx,cy,lr,lc];
+}
+
+function getCell(wr,wc){
+  const [cx,cy,lr,lc]=wtc(wr,wc);
+  return getChunk(cx,cy).cells[lr][lc];
+}
+
+function setCell(wr,wc,cell){
+  const [cx,cy,lr,lc]=wtc(wr,wc);
+  const ch=getChunk(cx,cy);
+  ch.cells[lr][lc]=cell;
+}
+
+
+
+// ═══════════════════════════════════════
+// КАМЕРА
+// ═══════════════════════════════════════
+function s2w(sx,sy){ return [sx/zoom+camX, sy/zoom+camY]; }
+function w2s(wx,wy){ return [(wx-camX)*zoom,(wy-camY)*zoom]; }
+function s2cell(sx,sy){ const [wx,wy]=s2w(sx,sy); return [Math.floor(wy/CELL),Math.floor(wx/CELL)]; }
+
+function visRange(){
+  const [wx0,wy0]=s2w(0,0), [wx1,wy1]=s2w(canvas.width,canvas.height);
+  return [Math.floor(wy0/CELL)-1, Math.ceil(wy1/CELL)+1,
+          Math.floor(wx0/CELL)-1, Math.ceil(wx1/CELL)+1];
+}
+
+function preload(){
+  const [r0,r1,c0,c1]=visRange();
+  const pad=CS;
+  for(let cy=Math.floor((r0-pad)/CS);cy<=Math.ceil((r1+pad)/CS);cy++)
+    for(let cx=Math.floor((c0-pad)/CS);cx<=Math.ceil((c1+pad)/CS);cx++)
+      getChunk(cx,cy);
+}
+
+// ═══════════════════════════════════════
+// СИМУЛЯЦИЯ — простой BFS без итераций
+// ═══════════════════════════════════════
+function simulate(){
+  // Собрать все непустые клетки
+  const all=[]; // [wr,wc,cell]
+  for(const [k,ch] of chunks){
+    const [cs,cys]=k.split('_').map(Number);
+    for(let lr=0;lr<CS;lr++) for(let lc=0;lc<CS;lc++){
+      const cl=ch.cells[lr][lc];
+      if(cl.type!==T.E){
+        const wr=cys*CS+lr, wc=cs*CS+lc;
+        all.push([wr,wc,cl]);
+      }
+    }
+  }
+
+  // Сброс
+  for(const [,,cl] of all){ cl.powered=false; cl.blocked=false; }
+
+  // Карта: ключ→cell (для быстрого доступа)
+  const M=new Map();
+  for(const [wr,wc,cl] of all) M.set(wk(wr,wc),[wr,wc,cl]);
+
+  // Передаёт ли src в (tr,tc)?
+  function sends(sr,sc,tr,tc,pw){
+    const e=M.get(wk(sr,sc)); if(!e) return false;
+    const s=e[2];
+    if(!pw.has(wk(sr,sc))) return false;
+    if(s.type===T.GEN||s.type===T.LEV) return true;
+    if(s.type===T.WIRE||s.type===T.NOT){
+      const [dr,dc]=D[s.dir]; return sr+dr===tr&&sc+dc===tc;
+    }
+    if(s.type===T.DUST) return true;
+    return false;
+  }
+
+  // Принимает ли (tr,tc) от (fr,fc)?
+  function accepts(tr,tc,fr,fc){
+    const e=M.get(wk(tr,tc)); if(!e) return false;
+    const t=e[2];
+    if(t.type===T.GEN||t.type===T.LEV||t.type===T.E) return false;
+    if(t.type===T.WIRE){
+      const [dr,dc]=D[t.dir]; return tr-fr===dr&&tc-fc===dc;
+    }
+    if(t.type===T.DUST||t.type===T.BULB||t.type===T.NOT) return true;
+    if(t.type===T.GATE){
+      // GATE принимает СПЕРЕДИ — со стороны стрелки (куда dir указывает)
+      const [dr,dc]=D[t.dir]; return tr-fr===dr&&tc-fc===dc;
+    }
+    return false;
+  }
+
+  // ── Шаг 1: найти какие ячейки GATE блокируют ──────────
+  // GATE: стрелка = откуда сигнал (сзади стрелки = вход)
+  // Сторона X (противоположная стрелке) = что блокируется
+  // Для определения блокировки нужно сначала узнать есть ли питание сзади стрелки
+  // Делаем предварительный BFS без учёта блокировок, потом вычитаем
+
+  // ── Шаг 2: BFS с учётом заблокированных клеток ────────
+  // Блокированные ячейки — те что стоят со стороны X от активного GATE
+  // Они НЕ могут получать питание
+
+  // Сначала определим какие GATE получат питание (предварительный BFS)
+  const pw=new Set();
+  const q=[];
+  for(const [wr,wc,cl] of all){
+    if(cl.type===T.GEN||(cl.type===T.LEV&&cl.on)){
+      pw.add(wk(wr,wc)); q.push([wr,wc]);
+    }
+  }
+
+  let h=0;
+  function bfsStep(){
+    while(h<q.length){
+      const[r,c]=q[h++];
+      const cl=M.get(wk(r,c))?.[2]; if(!cl) continue;
+      let tgts=[];
+      if(cl.type===T.GEN||cl.type===T.LEV)
+        D.forEach(([dr,dc])=>tgts.push([r+dr,c+dc]));
+      else if(cl.type===T.WIRE){ const[dr,dc]=D[cl.dir];tgts.push([r+dr,c+dc]); }
+      else if(cl.type===T.DUST) D.forEach(([dr,dc])=>tgts.push([r+dr,c+dc]));
+      else if(cl.type===T.NOT){ const[dr,dc]=D[cl.dir];tgts.push([r+dr,c+dc]); }
+      for(const[tr,tc]of tgts){
+        const tk=wk(tr,tc);
+        if(pw.has(tk)) continue;
+        if(!accepts(tr,tc,r,c)) continue;
+        pw.add(tk); q.push([tr,tc]);
+      }
+    }
+  }
+
+  bfsStep();
+
+  // NOT логика
+  function notHasInput(wr,wc){
+    return D.some(([dr,dc])=>{
+      const nr=wr+dr,nc=wc+dc;
+      if(!pw.has(wk(nr,nc))) return false;
+      const e=M.get(wk(nr,nc)); if(!e) return false;
+      const nb=e[2];
+      if(nb.type===T.GEN||nb.type===T.LEV) return true;
+      if(nb.type===T.WIRE){const[ddr,ddc]=D[nb.dir];return nr+ddr===wr&&nc+ddc===wc;}
+      if(nb.type===T.DUST) return true;
+      if(nb.type===T.NOT&&pw.has(wk(nr,nc))){const[ddr,ddc]=D[nb.dir];return nr+ddr===wr&&nc+ddc===wc;}
+      return false;
+    });
+  }
+  for(const [wr,wc,cl] of all){
+    if(cl.type!==T.NOT) continue;
+    const nk=wk(wr,wc);
+    if(!notHasInput(wr,wc)){
+      pw.add(nk);
+      const[dr,dc]=D[cl.dir];
+      const tr=wr+dr,tc=wc+dc,tk=wk(tr,tc);
+      if(!pw.has(tk)&&accepts(tr,tc,wr,wc)){ pw.add(tk); q.push([tr,tc]); }
+    } else { pw.delete(nk); }
+  }
+  bfsStep();
+
+  // ── GATE: определяем активные блокировщики ─────────────
+  // GATE смотрит стрелкой в сторону dir
+  // Сзади стрелки (противоположно dir) = ВХОД сигнала
+  // Со стороны X (куда смотрит стрелка, т.е. dir) = что БЛОКИРУЕТСЯ
+  const gateBlocked=new Set(); // ключи ячеек которые заблокированы
+  for(const [wr,wc,cl] of all){
+    if(cl.type!==T.GATE) continue;
+    const [fdr,fdc]=D[cl.dir];
+    // Вход — сзади стрелки (противоположная сторона)
+    const inputR=wr-fdr, inputC=wc-fdc;
+    if(pw.has(wk(inputR,inputC))){
+      cl.blocked=true;
+      // Блокируем — спереди стрелки (куда X, т.е. в направлении dir)
+      gateBlocked.add(wk(wr+fdr, wc+fdc));
+    }
+  }
+
+  // ── Пересчёт BFS с учётом блокировок ──────────────────
+  if(gateBlocked.size>0){
+    // Полностью сбрасываем pw и запускаем BFS заново,
+    // но заблокированные ячейки не могут быть добавлены
+    pw.clear();
+    const q2=[];
+    for(const [wr,wc,cl] of all){
+      if(cl.type===T.GEN||(cl.type===T.LEV&&cl.on)){
+        const k=wk(wr,wc);
+        if(!gateBlocked.has(k)){ pw.add(k); q2.push([wr,wc]); }
+      }
+    }
+    let h2=0;
+    while(h2<q2.length){
+      const[r,c]=q2[h2++];
+      const cl=M.get(wk(r,c))?.[2]; if(!cl) continue;
+      let tgts=[];
+      if(cl.type===T.GEN||cl.type===T.LEV)
+        D.forEach(([dr,dc])=>tgts.push([r+dr,c+dc]));
+      else if(cl.type===T.WIRE){ const[dr,dc]=D[cl.dir];tgts.push([r+dr,c+dc]); }
+      else if(cl.type===T.DUST) D.forEach(([dr,dc])=>tgts.push([r+dr,c+dc]));
+      else if(cl.type===T.NOT){ const[dr,dc]=D[cl.dir];tgts.push([r+dr,c+dc]); }
+      for(const[tr,tc]of tgts){
+        const tk=wk(tr,tc);
+        if(pw.has(tk)||gateBlocked.has(tk)) continue;
+        if(!accepts(tr,tc,r,c)) continue;
+        pw.add(tk); q2.push([tr,tc]);
+      }
+    }
+    // NOT пересчёт
+    for(const [wr,wc,cl] of all){
+      if(cl.type!==T.NOT) continue;
+      const nk=wk(wr,wc);
+      const hasIn=D.some(([dr,dc])=>{
+        const nr=wr+dr,nc=wc+dc;
+        if(!pw.has(wk(nr,nc))) return false;
+        const e=M.get(wk(nr,nc));if(!e)return false;
+        const nb=e[2];
+        if(nb.type===T.GEN||nb.type===T.LEV)return true;
+        if(nb.type===T.WIRE){const[ddr,ddc]=D[nb.dir];return nr+ddr===wr&&nc+ddc===wc;}
+        if(nb.type===T.DUST)return true;
+        return false;
+      });
+      if(!hasIn){
+        if(!gateBlocked.has(nk)) pw.add(nk);
+        const[dr,dc]=D[cl.dir];
+        const tr=wr+dr,tc=wc+dc,tk=wk(tr,tc);
+        if(!pw.has(tk)&&!gateBlocked.has(tk)&&accepts(tr,tc,wr,wc)){
+          pw.add(tk);q2.push([tr,tc]);
+        }
+      } else pw.delete(nk);
+    }
+    // Дополнительный BFS после NOT
+    while(h2<q2.length){
+      const[r,c]=q2[h2++];
+      const cl=M.get(wk(r,c))?.[2];if(!cl)continue;
+      let tgts=[];
+      if(cl.type===T.WIRE){const[dr,dc]=D[cl.dir];tgts.push([r+dr,c+dc]);}
+      else if(cl.type===T.DUST)D.forEach(([dr,dc])=>tgts.push([r+dr,c+dc]));
+      for(const[tr,tc]of tgts){
+        const tk=wk(tr,tc);
+        if(pw.has(tk)||gateBlocked.has(tk))continue;
+        if(!accepts(tr,tc,r,c))continue;
+        pw.add(tk);q2.push([tr,tc]);
+      }
+    }
+  }
+
+  // Применить
+  for(const [wr,wc,cl] of all) cl.powered=pw.has(wk(wr,wc));
+}
+
+function runSim(){ preload(); simulate(); draw(); }
+
+// ═══════════════════════════════════════
+// ОТРИСОВКА
+// ═══════════════════════════════════════
+function cs(){ return getComputedStyle(document.body); }
+
+function drawGen(c,x,y,s,p){
+  const cx=x+s/2,cy=y+s/2,r=s*.38;
+  if(p){c.shadowColor='#ff2200';c.shadowBlur=s*.4;}
+  const g=c.createRadialGradient(cx,cy,r*.1,cx,cy,r);
+  g.addColorStop(0,p?'#ff5533':'#661111');
+  g.addColorStop(1,p?'#880000':'#220000');
+  c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.fillStyle=g;c.fill();
+  c.strokeStyle=p?'#ff4422':'#441111';c.lineWidth=Math.max(1,s*.03);c.stroke();
+  c.shadowBlur=0;
+  // Молния
+  c.fillStyle=p?'#ffeeaa':'#884422';
+  const bh=r*.9,bw=r*.45;
+  c.beginPath();c.moveTo(cx+bw*.3,cy-bh/2);c.lineTo(cx-bw*.5,cy+bh*.05);
+  c.lineTo(cx+bw*.05,cy+bh*.05);c.lineTo(cx-bw*.3,cy+bh/2);
+  c.lineTo(cx+bw*.5,cy-bh*.05);c.lineTo(cx-bw*.05,cy-bh*.05);
+  c.closePath();c.fill();
+}
+
+function drawWire(c,x,y,s,p,dir){
+  const cx=x+s/2,cy=y+s/2;
+  c.save();c.translate(cx,cy);c.rotate((dir-1)*Math.PI/2);
+  if(p){c.shadowColor='#ff3300';c.shadowBlur=s*.3;}
+  const w=s*.7,hh=s*.22,sw=w*.55,hw=w*.4,hH=s*.44;
+  c.fillStyle=p?'#ff3311':'#2244bb';
+  c.beginPath();c.roundRect(-w/2,-hh,sw,hh*2,3);c.fill();
+  c.beginPath();c.moveTo(-w/2+sw,-hH/2);c.lineTo(-w/2+sw+hw,0);c.lineTo(-w/2+sw,hH/2);c.closePath();c.fill();
+  c.restore();c.shadowBlur=0;
+}
+
+function drawBulb(c,x,y,s,p){
+  const cx=x+s/2,cy=y+s/2-s*.05,br=s*.26;
+  if(p){
+    const gl=c.createRadialGradient(cx,cy,0,cx,cy,s*.7);
+    gl.addColorStop(0,'rgba(255,240,60,.5)');gl.addColorStop(1,'rgba(255,120,0,0)');
+    c.fillStyle=gl;c.beginPath();c.arc(cx,cy,s*.7,0,Math.PI*2);c.fill();
+    c.shadowColor='#ffee00';c.shadowBlur=s*.4;
+  }
+  const g=c.createRadialGradient(cx-br*.3,cy-br*.3,br*.05,cx,cy,br);
+  g.addColorStop(0,p?'#ffffcc':'#202030');g.addColorStop(1,p?'#ddaa00':'#0e0e1a');
+  c.beginPath();c.arc(cx,cy,br,0,Math.PI*2);c.fillStyle=g;c.fill();
+  c.strokeStyle=p?'#ffcc00':'#2a2a4a';c.lineWidth=Math.max(1,s*.03);c.stroke();
+  c.shadowBlur=0;
+  const by=cy+br*.7,bw=br*.9,bh=br*.5;
+  c.fillStyle=p?'#886600':'#1e1e30';
+  c.beginPath();c.roundRect(cx-bw/2,by,bw,bh,2);c.fill();
+}
+
+function drawNot(c,x,y,s,p,dir){
+  const cx=x+s/2,cy=y+s/2;
+  c.save();c.translate(cx,cy);c.rotate((dir-1)*Math.PI/2);
+  const bw=s*.82,bh=s*.44;
+  if(p){c.shadowColor='#aa44ff';c.shadowBlur=s*.3;}
+  c.fillStyle=p?'#1a0033':'#0e0018';
+  c.strokeStyle=p?'#cc44ff':'#442266';
+  c.lineWidth=Math.max(1.5,s*.035);
+  c.beginPath();c.roundRect(-bw/2,-bh/2,bw,bh,s*.08);c.fill();c.stroke();
+  // разделитель
+  c.strokeStyle=p?'#9922cc':'#331144';c.lineWidth=Math.max(1,s*.025);
+  c.beginPath();c.moveTo(0,-bh*.4);c.lineTo(0,bh*.4);c.stroke();
+  // стрелка входа
+  const aw=s*.12,ah=s*.1;
+  c.fillStyle=p?'#dd88ff':'#553377';
+  c.beginPath();c.moveTo(-bw*.48,-ah);c.lineTo(-bw*.48+aw*1.5,0);c.lineTo(-bw*.48,ah);c.closePath();c.fill();
+  // кружок выхода
+  const dr2=s*.065,dx=bw*.46;
+  c.beginPath();c.arc(dx,0,dr2,0,Math.PI*2);
+  c.fillStyle=p?'#ff88ff':'#441155';c.fill();
+  c.strokeStyle=p?'#ee44ff':'#662288';c.lineWidth=Math.max(1.5,s*.03);c.stroke();
+  // цифра
+  c.fillStyle=p?'#cc88ff':'#442255';
+  c.font=`bold ${Math.floor(s*.2)}px monospace`;
+  c.textAlign='center';c.textBaseline='middle';c.fillText('1',-bw*.2,0);
+  c.restore();c.shadowBlur=0;
+}
+
+function drawLever(c,x,y,s,on){
+  const cx=x+s/2,cy=y+s/2;
+  if(on){c.shadowColor='#00ff88';c.shadowBlur=s*.35;}
+  const bw=s*.7,bh=s*.2,by=cy+s*.15;
+  c.fillStyle=on?'#1a4a2a':'#1a1a2a';c.strokeStyle=on?'#33ff88':'#334455';
+  c.lineWidth=Math.max(1,s*.03);c.beginPath();c.roundRect(cx-bw/2,by,bw,bh,4);c.fill();c.stroke();
+  const angle=on?-Math.PI/3:Math.PI/3,len=s*.34;
+  const ex=cx+Math.sin(angle)*len,ey=cy+s*.15-Math.cos(angle)*len;
+  c.strokeStyle=on?'#44ff99':'#446688';c.lineWidth=Math.max(2,s*.06);c.lineCap='round';
+  c.beginPath();c.moveTo(cx,cy+s*.15);c.lineTo(ex,ey);c.stroke();c.lineCap='butt';
+  c.fillStyle=on?'#00ff88':'#335566';c.beginPath();c.arc(ex,ey,s*.09,0,Math.PI*2);c.fill();
+  c.shadowBlur=0;
+  c.fillStyle=on?'#00ff88':'#335566';c.font=`bold ${Math.floor(s*.13)}px monospace`;
+  c.textAlign='center';c.textBaseline='middle';c.fillText(on?'ON':'OFF',cx,by+bh/2);c.textAlign='left';
+}
+
+function dustLinks(wr,wc){
+  return D.map(([dr,dc])=>{
+    try{
+      const nb=getCell(wr+dr,wc+dc);
+      if(nb.type===T.E) return null;
+      if(nb.type===T.DUST||nb.type===T.BULB||nb.type===T.GEN||nb.type===T.LEV) return nb;
+      if(nb.type===T.WIRE||nb.type===T.NOT){
+        const[ndr,ndc]=D[nb.dir];
+        if(ndr===dr&&ndc===dc||ndr===-dr&&ndc===-dc) return nb;
+      }
+      return null;
+    }catch(e){return null;}
+  });
+}
+
+function drawDust(c,x,y,s,p,nbs){
+  const cx=x+s/2,cy=y+s/2,nr=s*.13;
+  if(p){c.shadowColor='#ff5500';c.shadowBlur=s*.25;}
+  c.lineCap='round';
+  D.forEach(([dr,dc],i)=>{
+    if(!nbs[i]) return;
+    const lit=p&&nbs[i].powered;
+    c.strokeStyle=lit?'#ff4400':p?'#772200':'#1a2a3a';
+    c.lineWidth=Math.max(2,s*.08);
+    c.beginPath();c.moveTo(cx,cy);c.lineTo(cx+dc*s*.5,cy+dr*s*.5);c.stroke();
+  });
+  c.lineCap='butt';
+  if(p){c.beginPath();c.arc(cx,cy,nr*1.8,0,Math.PI*2);c.fillStyle='#ff440022';c.fill();}
+  c.beginPath();c.arc(cx,cy,nr,0,Math.PI*2);
+  c.fillStyle=p?'#ff6600':'#223344';c.fill();
+  c.strokeStyle=p?'#ff9944':'#3a5566';c.lineWidth=Math.max(1,s*.025);c.stroke();
+  c.shadowBlur=0;
+}
+
+function drawGate(c,x,y,s,active,dir){
+  // Дизайн по эскизу: прямоугольник + X сверху + стрелка снизу
+  const cx=x+s/2,cy=y+s/2;
+  // dir: 0=вверх,1=вправо,2=вниз,3=влево. Стрелка нарисована вверх.
+  c.save();c.translate(cx,cy);c.rotate(dir*Math.PI/2);
+
+  const bw=s*.72,bh=s*.82,br=s*.07;
+  const col=active?'#00cccc':'#007788';
+  const bg=active?'#001a1a':'#000d10';
+  const glow=active?'#00ffff':'#009999';
+
+  if(active){c.shadowColor=glow;c.shadowBlur=s*.35;}
+
+  // Прямоугольник — корпус
+  c.fillStyle=bg;
+  c.strokeStyle=col;
+  c.lineWidth=Math.max(2.5,s*.055);
+  c.beginPath();c.roundRect(-bw/2,-bh/2,bw,bh,br);c.fill();c.stroke();
+  c.shadowBlur=0;
+
+  // X — крест сверху (верхняя половина)
+  const xr=bw*.32, xt=0, xy=-bh*.18;
+  c.strokeStyle=col;c.lineWidth=Math.max(3,s*.07);c.lineCap='round';
+  c.beginPath();c.moveTo(xt-xr,xy-xr*.7);c.lineTo(xt+xr,xy+xr*.7);c.stroke();
+  c.beginPath();c.moveTo(xt+xr,xy-xr*.7);c.lineTo(xt-xr,xy+xr*.7);c.stroke();
+
+  // Стрелка вверх — нижняя половина
+  const ay=bh*.12, aw=bw*.38, ah=bh*.32, sw=bw*.13;
+  c.fillStyle=col;
+  // Тело стрелки
+  c.beginPath();
+  c.moveTo(-sw/2,ay+ah*.5);
+  c.lineTo(-sw/2,ay);
+  c.lineTo(-aw/2,ay);
+  c.lineTo(0,ay-ah);
+  c.lineTo(aw/2,ay);
+  c.lineTo(sw/2,ay);
+  c.lineTo(sw/2,ay+ah*.5);
+  c.closePath();c.fill();
+
+  c.lineCap='butt';
+  c.restore();c.shadowBlur=0;
+}
+
+function drawHand(c,x,y,s){
+  const cx=x+s/2,cy=y+s/2+s*.04;c.fillStyle='#446688';
+  c.beginPath();c.roundRect(cx-s*.17,cy-s*.03,s*.34,s*.3,s*.06);c.fill();
+  const fw=s*.065,fx=[cx-s*.14,cx-s*.07,cx+s*.0,cx+s*.07];
+  for(let i=0;i<4;i++){c.beginPath();c.roundRect(fx[i],cy-s*.26-(i===1||i===2?s*.04:0),fw,s*.22,fw*.4);c.fill();}
+  c.beginPath();c.roundRect(cx-s*.26,cy+s*.01,s*.1,fw,fw*.3);c.fill();
+}
+function drawDel(c,x,y,s){
+  c.fillStyle='#1a0a0a';c.strokeStyle='#4a1a1a';c.lineWidth=1.5;
+  c.beginPath();c.roundRect(x+s*.15,y+s*.15,s*.7,s*.7,4);c.fill();c.stroke();
+  c.strokeStyle='#884444';c.lineWidth=2.5;c.lineCap='round';
+  const m=s*.28;
+  c.beginPath();c.moveTo(x+m,y+m);c.lineTo(x+s-m,y+s-m);
+  c.moveTo(x+s-m,y+m);c.lineTo(x+m,y+s-m);c.stroke();c.lineCap='butt';
+}
+
+// ── Главный draw ──────────────────────────────────────
+function draw(){
+  const st=cs();
+  const cBg=st.getPropertyValue('--bg0').trim()||'#08080f';
+  const cDot=st.getPropertyValue('--dot').trim()||'#13132b';
+  const cLn=st.getPropertyValue('--gln').trim()||'#0f0f26';
+  const cCh=st.getPropertyValue('--cln').trim()||'#1a1a3a';
+
+  ctx.fillStyle=cBg; ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.save(); ctx.scale(zoom,zoom); ctx.translate(-camX,-camY);
+
+  const [r0,r1,c0,c1]=visRange();
+
+  if(zoom>0.3){
+    ctx.fillStyle=cDot;
+    for(let r=r0;r<=r1+1;r++) for(let c=c0;c<=c1+1;c++){
+      ctx.beginPath();ctx.arc(c*CELL,r*CELL,zoom>0.7?1:.6,0,Math.PI*2);ctx.fill();
+    }
+  }
+  if(zoom>0.5){
+    ctx.strokeStyle=cLn;ctx.lineWidth=.5/zoom;
+    for(let r=r0;r<=r1+1;r++){ctx.beginPath();ctx.moveTo(c0*CELL,r*CELL);ctx.lineTo((c1+1)*CELL,r*CELL);ctx.stroke();}
+    for(let c=c0;c<=c1+1;c++){ctx.beginPath();ctx.moveTo(c*CELL,r0*CELL);ctx.lineTo(c*CELL,(r1+1)*CELL);ctx.stroke();}
+  }
+  if(zoom>0.4){
+    ctx.strokeStyle=cCh;ctx.lineWidth=1.2/zoom;
+    const cr0=Math.floor(r0/CS),cr1=Math.ceil(r1/CS);
+    const cc0=Math.floor(c0/CS),cc1=Math.ceil(c1/CS);
+    for(let cr=cr0;cr<=cr1;cr++){ctx.beginPath();ctx.moveTo(c0*CELL,cr*CS*CELL);ctx.lineTo((c1+1)*CELL,cr*CS*CELL);ctx.stroke();}
+    for(let cc=cc0;cc<=cc1;cc++){ctx.beginPath();ctx.moveTo(cc*CS*CELL,r0*CELL);ctx.lineTo(cc*CS*CELL,(r1+1)*CELL);ctx.stroke();}
+  }
+
+  for(let wr=r0;wr<=r1;wr++) for(let wc=c0;wc<=c1;wc++){
+    let cl;
+    try{cl=getCell(wr,wc);}catch(e){continue;}
+    if(cl.type===T.E) continue;
+    const x=wc*CELL,y=wr*CELL,p=cl.powered;
+    if(cl.type===T.GEN)  drawGen(ctx,x,y,CELL,p);
+    else if(cl.type===T.WIRE) drawWire(ctx,x,y,CELL,p,cl.dir);
+    else if(cl.type===T.BULB) drawBulb(ctx,x,y,CELL,p);
+    else if(cl.type===T.NOT)  drawNot(ctx,x,y,CELL,p,cl.dir);
+    else if(cl.type===T.LEV)  drawLever(ctx,x,y,CELL,cl.on);
+    else if(cl.type===T.DUST) drawDust(ctx,x,y,CELL,p,dustLinks(wr,wc));
+    else if(cl.type===T.GATE) drawGate(ctx,x,y,CELL,cl.blocked,cl.dir);
+  }
+  ctx.restore();
+
+  // HUD
+  const cr=Math.round(camY/CELL+canvas.height/zoom/CELL/2);
+  const cc=Math.round(camX/CELL+canvas.width/zoom/CELL/2);
+  document.getElementById('zV').textContent=Math.round(zoom*100);
+  document.getElementById('posV').textContent=cfg.coords?cc+', '+cr:'';
+}
+
+// ═══════════════════════════════════════
+// ИНВЕНТАРЬ
+// ═══════════════════════════════════════
+const ITEMS=[
+  {t:'hand',lbl:'РУКА',   fn:(c,s)=>drawHand(c,0,0,s)},
+  {t:'gen', lbl:'ГЕНЕР',  fn:(c,s)=>drawGen(c,0,0,s,true)},
+  {t:'wire',lbl:'СТРЕЛКА',fn:(c,s)=>drawWire(c,0,0,s,true,1)},
+  {t:'dust',lbl:'ПРОВОД', fn:(c,s)=>{
+    const nb=[{powered:true},null,null,null];
+    drawDust(c,0,0,s,true,nb);
+  }},
+  {t:'bulb',lbl:'ЛАМПА',  fn:(c,s)=>drawBulb(c,0,0,s,true)},
+  {t:'not', lbl:'НЕ',     fn:(c,s)=>drawNot(c,0,0,s,true,1)},
+  {t:'lev', lbl:'РЫЧАГ',  fn:(c,s)=>drawLever(c,0,0,s,false)},
+  {t:'gate',lbl:'БЛОК',   fn:(c,s)=>drawGate(c,0,0,s,false,1)},
+  {t:'del', lbl:'УДАЛ',   fn:(c,s)=>drawDel(c,0,0,s)},
+];
+
+const slots=document.querySelectorAll('#toolbar .slot');
+let selT='gen';
+
+function drawInv(){
+  slots.forEach((sl,i)=>{
+    const cv=sl.querySelector('canvas');
+    const sc=cv.getContext('2d');
+    sc.clearRect(0,0,cv.width,cv.height);
+    ITEMS[i].fn(sc,cv.width);
+  });
+}
+function updSel(){
+  slots.forEach(sl=>sl.classList.toggle('sel',sl.dataset.t===selT));
+}
+slots.forEach(sl=>{
+  sl.addEventListener('click',()=>{selT=sl.dataset.t;updSel();});
+});
+
+// ═══════════════════════════════════════
+// INPUT
+// ═══════════════════════════════════════
+let panning=false,panSX=0,panSY=0,panCX=0,panCY=0,didPan=false,lastPinch=0;
+
+function resize(){
+  canvas.width=canvas.offsetWidth||window.innerWidth;
+  canvas.height=canvas.offsetHeight||window.innerHeight;
+}
+
+canvas.addEventListener('mousedown',e=>{
+  if(selT==='hand'){
+    panning=true;didPan=false;
+    const r=canvas.getBoundingClientRect();
+    panSX=e.clientX-r.left;panSY=e.clientY-r.top;panCX=camX;panCY=camY;
+  }
+});
+canvas.addEventListener('mousemove',e=>{
+  if(!panning) return;
+  const r=canvas.getBoundingClientRect();
+  const dx=(e.clientX-r.left)-panSX,dy=(e.clientY-r.top)-panSY;
+  if(Math.abs(dx)>2||Math.abs(dy)>2) didPan=true;
+  camX=panCX-dx/zoom;camY=panCY-dy/zoom;draw();
+});
+canvas.addEventListener('mouseup',e=>{
+  const r=canvas.getBoundingClientRect();
+  const wasP=panning; panning=false;
+  if(!didPan) tap(e.clientX-r.left,e.clientY-r.top);
+  else if(wasP) {}
+});
+canvas.addEventListener('mouseleave',()=>{panning=false;});
+canvas.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const r=canvas.getBoundingClientRect();
+  const mx=e.clientX-r.left,my=e.clientY-r.top;
+  const [wx,wy]=s2w(mx,my);
+  zoom=Math.max(ZMIN,Math.min(ZMAX,zoom*(e.deltaY<0?zoomStep:1/zoomStep)));
+  camX=wx-mx/zoom;camY=wy-my/zoom;draw();
+},{passive:false});
+
+canvas.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  if(e.touches.length===1){
+    const t=e.touches[0],r=canvas.getBoundingClientRect();
+    const tx=t.clientX-r.left,ty=t.clientY-r.top;
+    didPan=false;
+    if(selT==='hand'){panning=true;panSX=tx;panSY=ty;panCX=camX;panCY=camY;}
+  } else if(e.touches.length===2){
+    panning=false;
+    const dx=e.touches[0].clientX-e.touches[1].clientX;
+    const dy=e.touches[0].clientY-e.touches[1].clientY;
+    lastPinch=Math.hypot(dx,dy);
+  }
+},{passive:false});
+canvas.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  if(e.touches.length===1&&panning){
+    const t=e.touches[0],r=canvas.getBoundingClientRect();
+    const dx=(t.clientX-r.left)-panSX,dy=(t.clientY-r.top)-panSY;
+    if(Math.abs(dx)>4||Math.abs(dy)>4) didPan=true;
+    camX=panCX-dx/zoom;camY=panCY-dy/zoom;draw();
+  } else if(e.touches.length===2){
+    const dx=e.touches[0].clientX-e.touches[1].clientX;
+    const dy=e.touches[0].clientY-e.touches[1].clientY;
+    const dist=Math.hypot(dx,dy);
+    if(lastPinch>0){
+      const r=canvas.getBoundingClientRect();
+      const mx=((e.touches[0].clientX+e.touches[1].clientX)/2)-r.left;
+      const my=((e.touches[0].clientY+e.touches[1].clientY)/2)-r.top;
+      const [wx,wy]=s2w(mx,my);
+      zoom=Math.max(ZMIN,Math.min(ZMAX,zoom*dist/lastPinch));
+      camX=wx-mx/zoom;camY=wy-my/zoom;draw();
+    }
+    lastPinch=dist;
+  }
+},{passive:false});
+canvas.addEventListener('touchend',e=>{
+  e.preventDefault();
+  if(e.changedTouches.length===1&&!didPan){
+    const t=e.changedTouches[0],r=canvas.getBoundingClientRect();
+    tap(t.clientX-r.left,t.clientY-r.top);
+  }
+  if(e.touches.length<2) lastPinch=0;
+  if(e.touches.length===0) panning=false;
+},{passive:false});
+
+const TM={gen:T.GEN,wire:T.WIRE,dust:T.DUST,bulb:T.BULB,not:T.NOT,lev:T.LEV,gate:T.GATE};
+
+function tap(sx,sy){
+  const [wr,wc]=s2cell(sx,sy);
+  let cl; try{cl=getCell(wr,wc);}catch(e){return;}
+
+  // HAND: только рычаги
+  if(selT==='hand'){
+    if(cl.type===T.LEV){cl.on=!cl.on;setCell(wr,wc,cl);snd('lev');runSim();}
+    return;
+  }
+  // Вращение существующего блока
+  const rotable=[T.WIRE,T.NOT,T.GATE];
+  if(rotable.includes(cl.type)&&selT!=='del'){
+    cl.dir=(cl.dir+1)%4;setCell(wr,wc,cl);runSim();return;
+  }
+  // Рычаг — переключить
+  if(cl.type===T.LEV&&selT!=='del'){
+    cl.on=!cl.on;setCell(wr,wc,cl);snd('lev');runSim();return;
+  }
+  // Удаление
+  if(selT==='del'){
+    setCell(wr,wc,mkCell());snd('del');runSim();return;
+  }
+  // Размещение
+  if(TM[selT]!==undefined){
+    setCell(wr,wc,mkCell(TM[selT]));snd('place');runSim();
+  }
+}
+
+// ═══════════════════════════════════════
+// ЗВУК
+// ═══════════════════════════════════════
+let AC=null;
+function snd(type){
+  if(!cfg.sound) return;
+  try{
+    if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended') AC.resume();
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.connect(g);g.connect(AC.destination);
+    if(type==='place'){o.frequency.value=600;g.gain.setValueAtTime(.07,AC.currentTime);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+.1);o.start();o.stop(AC.currentTime+.1);}
+    else if(type==='del'){o.frequency.value=200;g.gain.setValueAtTime(.05,AC.currentTime);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+.08);o.start();o.stop(AC.currentTime+.08);}
+    else{o.frequency.value=440;g.gain.setValueAtTime(.05,AC.currentTime);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+.06);o.start();o.stop(AC.currentTime+.06);}
+  }catch(e){}
+}
+
+// ═══════════════════════════════════════
+// НАСТРОЙКИ
+// ═══════════════════════════════════════
+const cfg={
+  theme: localStorage.getItem('en_theme')||'',
+  coords:localStorage.getItem('en_coords')!=='off',
+  sound: localStorage.getItem('en_sound')==='on',
+};
+
+function applyTheme(t){
+  cfg.theme=t;
+  document.body.className=t;
+  localStorage.setItem('en_theme',t);
+  document.querySelectorAll('[data-theme]').forEach(b=>b.classList.toggle('on',b.dataset.theme===t));
+  drawInv();draw();
+}
+function applyToggle(key,el){
+  cfg[key]=!cfg[key];
+  localStorage.setItem('en_'+key,cfg[key]?'on':'off');
+  el.classList.toggle('on',cfg[key]);
+  if(key==='coords') draw();
+}
+
+// Применить сохранённые
+applyTheme(cfg.theme);
+document.getElementById('tCoords').classList.toggle('on',cfg.coords);
+document.getElementById('tSound').classList.toggle('on',cfg.sound);
+
+// Кнопки настроек
+document.querySelectorAll('[data-theme]').forEach(b=>b.addEventListener('click',()=>applyTheme(b.dataset.theme)));
+document.getElementById('tCoords').addEventListener('click',()=>applyToggle('coords',document.getElementById('tCoords')));
+document.getElementById('tSound').addEventListener('click',()=>applyToggle('sound',document.getElementById('tSound')));
+
+// ═══════════════════════════════════════
+// МОДАЛКИ
+// ═══════════════════════════════════════
+function openModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show');}));
+
+document.getElementById('btnHome').addEventListener('click',()=>{
+  camX=-canvas.width/zoom/2;
+  camY=-canvas.height/zoom/2;
+  draw();
+});
+document.getElementById('btnSettings').addEventListener('click',()=>openModal('modSettings'));
+document.getElementById('btnPrivacy').addEventListener('click',()=>openModal('modPrivacy'));
+document.getElementById('btnHelp').addEventListener('click',()=>{buildHelp();openModal('modHelp');});
+document.getElementById('btnClear').addEventListener('click',()=>document.getElementById('confirm').classList.add('show'));
+document.getElementById('confirmNo').addEventListener('click',()=>document.getElementById('confirm').classList.remove('show'));
+document.getElementById('confirmYes').addEventListener('click',()=>{
+  document.getElementById('confirm').classList.remove('show');
+  chunks.clear();
+  preload();runSim();
+});
+document.getElementById('confirm').addEventListener('click',e=>{
+  if(e.target===document.getElementById('confirm')) document.getElementById('confirm').classList.remove('show');
+});
+
+// ── СПРАВКА ──────────────────────────────────────────
+const HELP=[
+  {t:'gen', title:'GEN — Генератор',sub:'Источник энергии',
+   desc:'Постоянно генерирует энергию во все 4 стороны. Всегда активен.',
+   tags:['Источник','4 стороны'],fn:(c,s)=>drawGen(c,0,0,s,true)},
+  {t:'wire',title:'СТРЕЛКА — Провод',sub:'Направленный проводник',
+   desc:'Принимает энергию только СЗАДИ (откуда смотрит). Передаёт только ВПЕРЁД. Тап на блок — поворот.',
+   tags:['Сзади→вперёд','Тап = повернуть'],fn:(c,s)=>drawWire(c,0,0,s,true,1)},
+  {t:'dust',title:'ПРОВОД — Пыль',sub:'Ненаправленный проводник',
+   desc:'Соединяется с соседями автоматически. Принимает и передаёт во все стороны.',
+   tags:['Все стороны','Авто-связь'],fn:(c,s)=>drawDust(c,0,0,s,true,[{powered:true},null,null,null])},
+  {t:'bulb',title:'ЛАМПА — Лампочка',sub:'Индикатор',
+   desc:'Загорается когда получает энергию. Не передаёт дальше.',
+   tags:['Приёмник','Любая сторона'],fn:(c,s)=>drawBulb(c,0,0,s,true)},
+  {t:'not', title:'НЕ — Инвертор',sub:'Логическое НЕ',
+   desc:'Нет сигнала на входе → активен и передаёт. Есть сигнал → гаснет. Вход ←, выход ○→. Тап — поворот.',
+   tags:['Инвертор','Тап = повернуть'],fn:(c,s)=>drawNot(c,0,0,s,true,1)},
+  {t:'lev', title:'РЫЧАГ — Переключатель',sub:'Ручной источник',
+   desc:'Тап в режиме РУКА — включить/выключить. Когда включён — источник как GEN.',
+   tags:['Ручное','РУКА = переключить'],fn:(c,s)=>drawLever(c,0,0,s,true)},
+  {t:'gate',title:'БЛОК — Блокировщик',sub:'Блокиратор сигнала',
+   desc:'Получает сигнал сзади. Когда активен — блокирует блок прямо перед собой. Тап — поворот.',
+   tags:['Блокировщик','Тап = повернуть'],fn:(c,s)=>drawGate(c,0,0,s,true,1)},
+];
+
+function buildHelp(){
+  const cont=document.getElementById('helpCards');
+  cont.innerHTML='';
+  HELP.forEach(info=>{
+    const card=document.createElement('div');
+    card.className='hcard';
+    const ic=document.createElement('canvas');
+    ic.width=44;ic.height=44;
+    info.fn(ic.getContext('2d'),44);
+    const tags=info.tags.map(t=>`<span class="tag">${t}</span>`).join('');
+    card.innerHTML=`<div class="hcard-head"><div class="hcard-icon" style="width:48px;height:48px;flex-shrink:0;border-radius:8px;background:var(--bg0);display:flex;align-items:center;justify-content:center"></div><div><div class="hcard-title">${info.title}</div><div class="hcard-sub">${info.sub}</div></div></div><div class="hcard-body">${info.desc}<br><br>${tags}</div>`;
+    card.querySelector('.hcard-icon').appendChild(ic);
+    card.addEventListener('click',()=>{
+      const o=card.classList.contains('open');
+      document.querySelectorAll('.hcard').forEach(c=>c.classList.remove('open'));
+      if(!o)card.classList.add('open');
+    });
+    cont.appendChild(card);
+  });
+}
+
+// ═══════════════════════════════════════
+// КЛАВИАТУРА
+// ═══════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  const km={h:'hand',g:'gen',w:'wire',u:'dust',b:'bulb',n:'not',l:'lev',t:'gate',d:'del'};
+  if(km[e.key]){selT=km[e.key];updSel();}
+  const P=60/zoom;
+  if(e.key==='ArrowLeft'){camX-=P;draw();}
+  if(e.key==='ArrowRight'){camX+=P;draw();}
+  if(e.key==='ArrowUp'){camY-=P;draw();}
+  if(e.key==='ArrowDown'){camY+=P;draw();}
+  if(e.key==='+'||e.key==='='){const cx=camX+canvas.width/zoom/2,cy=camY+canvas.height/zoom/2;zoom=Math.min(ZMAX,zoom*zoomStep);camX=cx-canvas.width/zoom/2;camY=cy-canvas.height/zoom/2;draw();}
+  if(e.key==='-'){const cx=camX+canvas.width/zoom/2,cy=camY+canvas.height/zoom/2;zoom=Math.max(ZMIN,zoom/zoomStep);camX=cx-canvas.width/zoom/2;camY=cy-canvas.height/zoom/2;draw();}
+});
+
+window.addEventListener('resize',()=>{resize();draw();});
+
+// ═══════════════════════════════════════
+// СТАРТ
+// ═══════════════════════════════════════
+resize();
+drawInv();
+updSel();
+runSim();
+
+
+// ═══════════════════════════════════════
+// ЭКСПОРТ / ИМПОРТ со сжатием LZ
+// ═══════════════════════════════════════
+
+// ═══════════════════════════════════════
+// СЖАТИЕ — встроенное, без внешних зависимостей
+// 5 байт/блок бинарно + RLE + base91
+// 1000 блоков → ~200-600 символов
+// ═══════════════════════════════════════
+
+// Base91 — эффективнее base64 на ~23%
+const _B91='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+,./:;<=>?@[]^_`{|}~"';
+function b91enc(u8){
+  let b=0,n=0,o='';
+  for(let i=0;i<u8.length;i++){
+    b|=u8[i]<<n; n+=8;
+    if(n>13){let v=b&8191;if(v>88){b>>=13;n-=13;}else{v=b&16383;b>>=14;n-=14;}
+      o+=_B91[v%91]+_B91[(v/91)|0];}
+  }
+  if(n){o+=_B91[b%91];if(n>7||b>90)o+=_B91[(b/91)|0];}
+  return o;
+}
+function b91dec(s){
+  let v=-1,b=0,n=0,o=[];
+  for(let i=0;i<s.length;i++){
+    const c=_B91.indexOf(s[i]);if(c<0)continue;
+    if(v<0)v=c;
+    else{v+=c*91;b|=v<<n;n+=(v&8191)>88?13:14;v=-1;
+      do{o.push(b&255);b>>=8;n-=8;}while(n>7);}
+  }
+  if(v>-1)o.push((b|v<<n)&255);
+  return new Uint8Array(o);
+}
+
+// RLE сжатие бинарных данных (5-байтные записи)
+// Группируем записи с одинаковым type+dir+on (первый байт)
+function rleEncode(u8){
+  // Формат: если повтор → 0xFF + count + byte, иначе byte
+  // Работает побайтово на упакованных данных
+  const out=[];
+  let i=0;
+  while(i<u8.length){
+    const b=u8[i]; let run=1;
+    while(i+run<u8.length&&u8[i+run]===b&&run<254) run++;
+    if(run>2){out.push(0xff,run,b);i+=run;}
+    else{if(b===0xff){out.push(0xff,1,0xff);}else out.push(b);i++;}
+  }
+  return new Uint8Array(out);
+}
+function rleDecode(u8){
+  const out=[];
+  for(let i=0;i<u8.length;i++){
+    if(u8[i]===0xff&&i+2<u8.length){
+      const cnt=u8[i+1],val=u8[i+2];
+      for(let j=0;j<cnt;j++) out.push(val);
+      i+=2;
+    } else out.push(u8[i]);
+  }
+  return new Uint8Array(out);
+}
+
+function packToBuf(cells){
+  const minR=Math.min(...cells.map(c=>c[1]));
+  const minC=Math.min(...cells.map(c=>c[2]));
+  const s=[...cells].sort((a,b)=>a[1]!==b[1]?a[1]-b[1]:a[2]-b[2]);
+  const buf=new Uint8Array(s.length*5);
+  let i=0;
+  for(const[t,r,c,d,o] of s){
+    buf[i++]=(t&7)|((d&3)<<3)|((o?1:0)<<5);
+    buf[i++]=(r-minR)>>8; buf[i++]=(r-minR)&0xff;
+    buf[i++]=(c-minC)>>8; buf[i++]=(c-minC)&0xff;
+  }
+  return buf;
+}
+
+function bufToCells(u8){
+  if(!u8||u8.length%5!==0) return null;
+  const cells=[];
+  for(let i=0;i<u8.length;i+=5){
+    const b=u8[i],t=b&7,d=(b>>3)&3,o=(b>>5)&1;
+    const r=(u8[i+1]<<8)|u8[i+2],c=(u8[i+3]<<8)|u8[i+4];
+    if(t>=1&&t<=7) cells.push([t,r,c,d,o]);
+  }
+  return cells;
+}
+
+function exportMap(){
+  const cells=[];
+  for(const[k,ch] of chunks){
+    const[cxs,cys]=k.split('_').map(Number);
+    for(let lr=0;lr<CS;lr++) for(let lc=0;lc<CS;lc++){
+      const cl=ch.cells[lr][lc];
+      if(cl.type===T.E) continue;
+      const wr=cys*CS+lr,wc=cxs*CS+lc;
+      cells.push([cl.type,wr,wc,cl.dir,cl.on?1:0]);
+    }
+  }
+  if(!cells.length) return null;
+  const raw=packToBuf(cells);
+  const compressed=rleEncode(raw);
+  // Берём меньшее из сжатого и несжатого
+  const out=compressed.length<raw.length?compressed:raw;
+  return 'ENS4:'+b91enc(out);
+}
+
+function importMap(code){
+  code=code.trim();
+  try{
+    if(code.startsWith('ENS4:')){
+      const u8=b91dec(code.slice(5));
+      // Пробуем RLE-decode, если не кратно 5 — значит RLE
+      let raw=u8;
+      if(u8.length%5!==0) raw=rleDecode(u8);
+      return applyImport(bufToCells(raw));
+    }
+    if(code.startsWith('ENS3:')){
+      // Старый формат base64
+      const s=code.slice(5);
+      const u8=b91dec(s);
+      if(u8.length%5===0) return applyImport(bufToCells(u8));
+      return{ok:false,msg:'Повреждённый код ENS3'};
+    }
+    if(code.startsWith('ENS1:')||code.startsWith('ENS2:')){
+      const txt=decodeURIComponent(escape(atob(code.slice(5))));
+      const p=JSON.parse(txt);
+      if(Array.isArray(p[0])&&p[0].length===5){
+        let pr=0,pc=0;
+        return applyImport(p.map(([t,d,o,dr,dc])=>{pr+=dr;pc+=dc;return[t,pr,pc,d,o];}));
+      }
+      return applyImport(p);
+    }
+    return{ok:false,msg:'Неверный формат кода'};
+  }catch(e){return{ok:false,msg:'Ошибка: '+e.message};}
+}
+
+function applyImport(cells){
+  if(!cells) return{ok:false,msg:'Не удалось прочитать код'};
+  try{
+    for(const[,ch] of chunks) ch.cells.forEach(row=>row.forEach((_,i,arr)=>{arr[i]=mkCell();}));
+    let count=0;
+    for(const[t,r,c,d,o] of cells){
+      if(t<1||t>7) continue;
+      setCell(r,c,mkCell(t,d??1,!!o));count++;
+    }
+    return{ok:true,count};
+  }catch(e){return{ok:false,msg:'Ошибка: '+e.message};}
+}
+
+document.getElementById('btnShare').addEventListener('click',()=>{
+  document.getElementById('exportCode').value='';
+  document.getElementById('importCode').value='';
+  document.getElementById('exportInfo').textContent='';
+  document.getElementById('importInfo').textContent='';
+  openModal('modShare');
+});
+
+document.getElementById('btnExport').addEventListener('click',()=>{
+  const code=exportMap();
+  if(!code){
+    document.getElementById('exportInfo').textContent='⚠ Карта пустая — нечего экспортировать';
+    document.getElementById('exportInfo').style.color='#ff6644';
+    return;
+  }
+  document.getElementById('exportCode').value=code;
+  // Считаем блоки
+  let count=0;
+  for(const[,ch] of chunks) ch.cells.forEach(row=>row.forEach(cl=>{if(cl.type!==T.E)count++;}));
+  const kb=(code.length/1024).toFixed(1);
+  // Примерный размер без сжатия (каждый блок ~15 символов в JSON)
+  const rawEst=count*15;
+  const ratio=Math.round((1-code.length/rawEst)*100);
+  const ratioStr=ratio>0?` · сжатие ~${ratio}%`:'';
+  document.getElementById('exportInfo').textContent=`${count} блоков · ${code.length} симв (${kb} КБ)${ratioStr}`;
+  document.getElementById('exportInfo').style.color='var(--txt)';
+});
+
+document.getElementById('btnCopy').addEventListener('click',()=>{
+  const code=document.getElementById('exportCode').value;
+  if(!code){document.getElementById('exportInfo').textContent='⚠ Сначала создай код';document.getElementById('exportInfo').style.color='#ff6644';return;}
+  navigator.clipboard.writeText(code).then(()=>{
+    document.getElementById('exportInfo').textContent='✓ Скопировано в буфер!';
+    document.getElementById('exportInfo').style.color='#44ff88';
+  }).catch(()=>{
+    document.getElementById('exportCode').select();
+    document.execCommand('copy');
+    document.getElementById('exportInfo').textContent='✓ Скопировано!';
+    document.getElementById('exportInfo').style.color='#44ff88';
+  });
+});
+
+document.getElementById('btnImport').addEventListener('click',()=>{
+  const code=document.getElementById('importCode').value.trim();
+  if(!code){
+    document.getElementById('importInfo').textContent='⚠ Вставь код карты';
+    document.getElementById('importInfo').style.color='#ff6644';
+    return;
+  }
+  const res=importMap(code);
+  if(res.ok){
+    document.getElementById('importInfo').textContent=`✓ Загружено ${res.count} блоков!`;
+    document.getElementById('importInfo').style.color='#44ff88';
+    runSim();
+    setTimeout(()=>closeModal('modShare'),800);
+  } else {
+    document.getElementById('importInfo').textContent='✗ '+res.msg;
+    document.getElementById('importInfo').style.color='#ff4444';
+  }
+});
+
+})();
+</script>
+</body>
+</html>
